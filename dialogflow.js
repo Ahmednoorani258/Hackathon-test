@@ -41,7 +41,7 @@ app.post("/webhook", async (req, res) => {
 
     function emailsender(agent) {
         const { name , email} = agent.parameters;
-        agent.add(`Hello ${name}, I will send an email to ${email}`);
+        agent.add(`Hello ${name.name}, I will send an email to ${email}`);
     }
 
     let intentMap = new Map();
