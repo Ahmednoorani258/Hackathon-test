@@ -4,7 +4,9 @@ const { WebhookClient, Suggestion } = require('dialogflow-fulfillment');
 const express = require("express")
 const cors = require("cors");
 require('dotenv').config();
-
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = require('twilio')(accountSid, authToken);
 const app = express();
 app.use(express.json()) 
 app.use(cors());
@@ -40,21 +42,31 @@ app.post("/webhook", async (req, res) => {
     }
 
     function emailsender(agent) {
-        const { name , email} = agent.parameters;
-        agent.add(`Hello ${name.name}, I will send an email to ${email}`);
-        (async () => {
-            try {
-              const info = await transporter.sendMail({
-                from: '"ahmednoorani" <ahmednoorani259@gmail.com>',
-                to: email,
-                subject: "Hello ✔",
-                text:`Hello ${name.name}, I will send an email to ${email}`, // plain‑text body
-              });
-              console.log("Message sent:", info.messageId);
-            } catch (error) {
-              console.error("Error sending email:", error);
-            }
-        })();
+      const { name , email} = agent.parameters;
+      agent.add(`Hello ${name.name}, I will send an email to ${email}`);
+      (async () => {
+          try {
+            const info = await transporter.sendMail({
+              from: '"ahmednoorani" <ahmednoorani259@gmail.com>',
+              to: email,
+              subject: "Hello ✔",
+              text:`Hello ${name.name}, I will send an email to ${email}`, // plain‑text body
+            });
+            console.log("Message sent:", info.messageId);
+          } catch (error) {
+            console.error("Error sending email:", error);
+          }
+      })();
+
+        
+
+      client.messages.create({
+        from: 'whatsapp:+14155238886',
+        body: `Hello ${name.name}, thanks for connecting. We have sent an email to ${email}.`,
+        to: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`
+      })
+    .then(message => console.log(message.sid))
+    .done();
     }
 
     let intentMap = new Map();
