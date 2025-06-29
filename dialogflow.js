@@ -7,6 +7,7 @@ require('dotenv').config();
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
+const runGeminiChat = require('./services/gemini');
 const app = express();
 app.use(express.json()) 
 app.use(cors());
@@ -68,9 +69,28 @@ app.post("/webhook", async (req, res) => {
       }
     }
 
+    async function fallback(agent) {
+      try {
+          const action = req.body.queryResult.action;
+          const queryText = req.body.queryResult.queryText;
+
+          if (action === 'input.unknown') {
+              const response = await runGeminiChat(queryText);
+              agent.add(response);
+              console.log("Gemini:", response);
+          } else {
+              agent.add("Sorry, I couldn't understand. Please rephrase.");
+          }
+      } catch (err) {
+          console.error("Fallback error:", err);
+          agent.add("There was a problem getting a response. Please try again.");
+      }
+    }
+
     let intentMap = new Map();
     intentMap.set('Default Welcome Intent', hi); 
     intentMap.set('email test', emailsender);
+    intentMap.set('Default Fallback Intent', fallback);
     agent.handleRequest(intentMap);
 })
 app.listen(PORT, () => {
