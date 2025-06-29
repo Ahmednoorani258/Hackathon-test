@@ -41,32 +41,31 @@ app.post("/webhook", async (req, res) => {
         agent.add("hello from server")
     }
 
-    function emailsender(agent) {
-      const { name , email} = agent.parameters;
-      agent.add(`Hello ${name.name}, I will send an email to ${email}`);
-      (async () => {
-          try {
-            const info = await transporter.sendMail({
-              from: '"ahmednoorani" <ahmednoorani259@gmail.com>',
-              to: email,
-              subject: "Hello ✔",
-              text:`Hello ${name.name}, I will send an email to ${email}`, // plain‑text body
-            });
-            console.log("Message sent:", info.messageId);
-          } catch (error) {
-            console.error("Error sending email:", error);
-          }
-      })();
-
-        
-
-      client.messages.create({
-        from: 'whatsapp:+14155238886',
-        body: `Hello ${name.name}, thanks for connecting. We have sent an email to ${email}.`,
-        to: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`
-      })
-    .then(message => console.log(message.sid))
-    .done();
+    async function emailsender(agent) {
+      const { name, email } = agent.parameters;
+      const emailMessage = `Hello ${name.name}, I will send an email to ${email}`;
+      agent.add(emailMessage);
+    
+      try {
+        const info = await transporter.sendMail({
+          from: '"ahmednoorani" <ahmednoorani259@gmail.com>',
+          to: email,
+          subject: "Hello ✔",
+          text: emailMessage,
+        });
+        console.log("Email sent:", info.messageId);
+    
+        const message = await client.messages.create({
+          from: 'whatsapp:+14155238886',
+          body: `Hello ${name.name}, thanks for connecting. We have sent an email to ${email}.`,
+          to: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`
+        });
+        console.log("WhatsApp sent:", message.sid);
+    
+      } catch (error) {
+        console.error("Error in email or WhatsApp:", error);
+        agent.add("There was an error sending your message. Please try again later.");
+      }
     }
 
     let intentMap = new Map();
